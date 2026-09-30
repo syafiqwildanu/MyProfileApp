@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teori SharedPreferences &amp; Studi Kasus Aplikasi Pengaturan Profil | Pemrograman Android</title>
+<style>
+  :root{
+    --bg:#0f172a; --card:#1e293b; --card2:#16202e;
+    --accent:#3ddc84; --accent2:#38bdf8; --accent3:#fbbf24;
+    --text:#e2e8f0; --muted:#94a3b8; --code-bg:#0b1220;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.7}
+
+  /* ===== Hero ===== */
+  header.hero{
+    min-height:80vh;display:flex;flex-direction:column;justify-content:center;align-items:center;
+    text-align:center;padding:60px 24px;
+    background:radial-gradient(1200px 500px at 20% -10%,rgba(61,220,132,.18),transparent),
+               radial-gradient(900px 400px at 90% 10%,rgba(56,189,248,.15),transparent),var(--bg);
+  }
+  .badge{display:inline-block;background:rgba(61,220,132,.15);color:var(--accent);border:1px solid rgba(61,220,132,.4);
+    padding:6px 18px;border-radius:999px;font-size:.85rem;letter-spacing:2px;text-transform:uppercase;margin-bottom:22px}
+  header.hero h1{font-size:clamp(2rem,5vw,3.4rem);font-weight:800;line-height:1.2}
+  header.hero h1 span{color:var(--accent)}
+  header.hero p.sub{margin-top:18px;color:var(--muted);max-width:740px;font-size:1.15rem}
+  .hero-tags{margin-top:26px;display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+  .hero-tags span{background:var(--card);border:1px solid #334155;padding:8px 16px;border-radius:10px;font-size:.9rem;color:var(--accent2)}
+  .scroll-hint{margin-top:50px;color:var(--muted);font-size:.85rem;animation:bounce 2s infinite}
+  @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(8px)}}
+
+  main{max-width:980px;margin:0 auto;padding:40px 24px 100px}
+  section{margin-bottom:70px}
+  .sec-num{color:var(--accent);font-weight:700;font-size:.9rem;letter-spacing:2px;text-transform:uppercase}
+  h2{font-size:1.65rem;margin:6px 0 20px;display:flex;align-items:center;flex-wrap:wrap;gap:10px}
+  h2 .bar{width:6px;height:26px;background:var(--accent);border-radius:4px;display:inline-block;flex-shrink:0}
+  h3{font-size:1.12rem;margin:24px 0 8px;color:var(--accent2)}
+  h4{font-size:.98rem;margin:18px 0 6px;color:var(--accent3)}
+  p.lead{color:var(--muted);font-size:1.05rem}
+
+  .card{background:var(--card);border:1px solid #334155;border-radius:14px;padding:22px;margin:16px 0}
+
+  /* Table */
+  table{width:100%;border-collapse:collapse;margin:16px 0;font-size:.95rem}
+  th,td{padding:11px 14px;border:1px solid #334155;text-align:left;vertical-align:top}
+  th{background:var(--card2);color:var(--accent)}
+
+  /* Steps */
+  ol.steps{list-style:none;counter-reset:s;margin:16px 0}
+  ol.steps li{counter-increment:s;position:relative;padding:12px 18px 12px 60px;background:var(--card);
+    border:1px solid #334155;border-radius:12px;margin-bottom:9px}
+  ol.steps li::before{content:counter(s);position:absolute;left:16px;top:12px;width:30px;height:30px;border-radius:50%;
+    background:var(--accent);color:#052e16;font-weight:800;display:flex;align-items:center;justify-content:center}
+
+  ul.dots{margin:8px 0 8px 22px;color:var(--muted)}
+  ul.dots li{margin-bottom:7px}
+  ul.dots li b{color:var(--text)}
+
+  /* Code */
+  pre{background:var(--code-bg);border:1px solid #1e3a5f;border-radius:12px;padding:18px;overflow-x:auto;
+    font-family:'Consolas','JetBrains Mono',monospace;font-size:.9rem;margin:14px 0;line-height:1.65}
+  code{font-family:'Consolas',monospace;color:#7dd3fc}
+  pre code{color:#c4e2ff}
+  .c-kw{color:#c792ea}.c-str{color:#3ddc84}.c-com{color:#64748b;font-style:italic}.c-tag{color:#fbbf24}
+  code.inline{background:var(--code-bg);padding:2px 8px;border-radius:6px;font-size:.88em}
+
+  .note{background:rgba(56,189,248,.08);border-left:4px solid var(--accent2);padding:14px 18px;border-radius:0 10px 10px 0;margin:16px 0;color:#bae6fd}
+  .warn{background:rgba(251,191,36,.08);border-left:4px solid var(--accent3);padding:14px 18px;border-radius:0 10px 10px 0;margin:16px 0;color:#fde68a}
+  .ok{background:rgba(61,220,132,.09);border-left:4px solid var(--accent);padding:14px 18px;border-radius:0 10px 10px 0;margin:16px 0;color:#bbf7d0}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin:16px 0}
+
+  .checklist{list-style:none;margin:16px 0}
+  .checklist li{padding:10px 14px;background:var(--card);border:1px solid #334155;border-radius:10px;margin-bottom:8px;padding-left:42px;position:relative}
+  .checklist li::before{content:"✓";position:absolute;left:14px;color:var(--accent);font-weight:800}
+
+  /* Poin kunci */
+  .key{background:linear-gradient(90deg,rgba(61,220,132,.14),transparent);border-left:4px solid var(--accent);
+    border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;font-size:1.05rem;color:#d1fae5}
+
+  /* Kartu ringkasan padat */
+  .mini{background:var(--card2);border:1px solid #334155;border-radius:12px;padding:16px}
+  .mini h4{color:var(--accent3);font-size:.95rem;margin-bottom:6px}
+  .mini ul{margin-left:18px;color:var(--muted);font-size:.92rem}
+  .mini li{margin-bottom:3px}
+  .mini ol{margin-left:18px;color:var(--muted);font-size:.92rem}
+  .mini ol li{margin-bottom:3px}
+
+  /* ===== Khusus materi SharedPreferences ===== */
+
+  /* Diagram alur simpan–baca */
+  .flow{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;background:var(--code-bg);
+    border:1px solid #1e3a5f;border-radius:14px;padding:22px;margin:22px 0}
+  .flow .box{background:var(--card);border:1px solid #334155;border-radius:12px;padding:14px 16px;min-width:170px;
+    max-width:220px;text-align:center;font-size:.88rem}
+  .flow .box b{display:block;color:var(--accent);margin-bottom:6px;font-size:.92rem}
+  .flow .box small{display:block;color:var(--muted);font-size:.76rem;margin-top:6px}
+  .flow .box.store{border-color:var(--accent3)}
+  .flow .box.store b{color:var(--accent3)}
+  .flow .arrow{color:var(--accent2);font-weight:800;font-size:.9rem;text-align:center;line-height:1.4}
+  .flow .arrow span{display:block;font-size:.7rem;color:var(--muted);font-weight:600}
+
+  /* Mockup layar Android (tema aplikasi terang) */
+  .screens{display:flex;gap:26px;flex-wrap:wrap;justify-content:center;margin:22px 0}
+  figure.phone{margin:0;text-align:center}
+  .phone-body{width:262px;height:510px;background:#0b1220;border:2px solid #334155;border-radius:30px;padding:9px;
+    box-shadow:0 18px 30px -12px rgba(0,0,0,.75);position:relative}
+  .phone-notch{position:absolute;top:9px;left:50%;transform:translateX(-50%);width:96px;height:17px;background:#0b1220;
+    border-bottom-left-radius:12px;border-bottom-right-radius:12px;z-index:5}
+  .phone-screen{width:100%;height:100%;background:#f8fafc;border-radius:22px;overflow:hidden;position:relative;color:#1f2937;
+    display:flex;flex-direction:column;font-size:.72rem}
+  .phone-screen.dark{background:#121212;color:#f5f5f5}
+  .pf-status{display:flex;justify-content:space-between;font-size:.55rem;padding:7px 14px 0;color:#64748b}
+  .phone-screen.dark .pf-status{color:#9ca3af}
+  .pf-appbar{background:#2db86f;color:#08301c;font-weight:700;padding:9px 14px;font-size:.76rem}
+  .phone-screen.dark .pf-appbar{background:#14532d;color:#d1fae5}
+  .pf-body{flex:1;padding:14px;display:flex;flex-direction:column;gap:9px;overflow:hidden}
+  .pf-hero{display:flex;flex-direction:column;align-items:center;gap:5px;padding-bottom:8px;border-bottom:1px dashed #e2e8f0}
+  .phone-screen.dark .pf-hero{border-color:#334155}
+  .pf-avatar{width:58px;height:58px;border-radius:50%;overflow:hidden;box-shadow:0 3px 8px rgba(0,0,0,.18)}
+  .pf-avatar svg{display:block;width:100%;height:100%}
+  .pf-name{font-size:.86rem;font-weight:800}
+  .pf-mail{font-size:.64rem;color:#64748b}
+  .phone-screen.dark .pf-mail{color:#9ca3af}
+  .pf-label{font-size:.6rem;font-weight:700;color:#64748b;text-align:center}
+  .phone-screen.dark .pf-label{color:#9ca3af}
+  .pf-input{background:#fff;border:1px solid #cbd5e1;border-radius:8px;padding:7px 9px;font-size:.68rem;color:#334155;min-height:30px}
+  .pf-input.empty{color:#94a3b8}
+  .phone-screen.dark .pf-input{background:#1e1e1e;border-color:#3f3f46;color:#e5e5e5}
+  .pf-avatar-row{display:flex;gap:7px;justify-content:center}
+  .pf-av-opt{width:34px;height:34px;border-radius:50%;overflow:hidden;border:2px solid transparent}
+  .pf-av-opt.pilih{border-color:#3ddc84;box-shadow:0 0 0 2px rgba(61,220,132,.25)}
+  .pf-av-opt svg{display:block;width:100%;height:100%}
+  .pf-switch-row{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:.68rem}
+  .pf-switch{width:36px;height:19px;border-radius:999px;background:#cbd5e1;position:relative;flex-shrink:0}
+  .pf-switch i{position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:50%;background:#fff;display:block}
+  .pf-switch.on{background:#3ddc84}
+  .pf-switch.on i{left:auto;right:2px}
+  .pf-btn{background:#3ddc84;color:#08301c;font-weight:800;border-radius:9px;padding:9px;text-align:center;font-size:.7rem}
+  .pf-btn.ghost{background:transparent;border:1px solid #cbd5e1;color:#64748b;font-weight:700}
+  .phone-screen.dark .pf-btn.ghost{border-color:#3f3f46;color:#9ca3af}
+  .pf-toast{position:absolute;left:50%;bottom:26px;transform:translateX(-50%);background:rgba(31,41,55,.94);color:#fff;
+    font-size:.63rem;padding:7px 14px;border-radius:999px;white-space:nowrap;z-index:6}
+  figcaption.ps-cap{font-size:.82rem;color:var(--muted);margin-top:10px;max-width:262px}
+
+  /* Langkah bernomor untuk studi kasus */
+  .step{margin:26px 0;padding-left:0}
+  .step-title{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+  .step-num{width:34px;height:34px;border-radius:10px;background:var(--accent);color:#052e16;font-weight:800;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .step-title h3{margin:0}
+
+  footer{text-align:center;padding:40px 24px;color:var(--muted);border-top:1px solid #1e293b;font-size:.9rem}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="badge">Pemrograman Android &bull; Materi Teori</div>
+  <h1>Penyimpanan Data Lokal: <span>SharedPreferences</span></h1>
+  <p class="sub">Data yang diketik pengguna jangan hilang saat aplikasi ditutup. Kenali penyimpanan kunci&ndash;nilai paling sederhana di Android, lalu terapkan lewat <b>studi kasus Aplikasi Pengaturan Profil</b> langkah demi langkah.</p>
+  <div class="hero-tags">
+    <span>SharedPreferences</span><span>Key&ndash;Value</span><span>Editor &amp; apply()</span><span>Data Persisten</span><span>Pengaturan Profil</span>
+  </div>
+  <div class="scroll-hint">▼ scroll untuk mulai belajar</div>
+</header>
+
+<main>
+
+<!-- ================= 01 MASALAH ================= -->
+<section id="masalah">
+  <div class="sec-num">Materi 01</div>
+  <h2><span class="bar"></span>Kenapa Data Bisa Hilang?</h2>
+
+  <p class="lead">Bayangkan pengguna mengisi nama dan email di aplikasi kamu, menekan <b>Simpan</b>, lalu menutup aplikasi. Saat dibuka lagi &mdash; semua isian <b>kosong kembali</b>. Ini bukan salah tampilan, melainkan karena data hanya disimpan di <b>memori</b>.</p>
+
+  <h3>Variabel biasa hidup hanya selama aplikasi berjalan</h3>
+  <pre><code><span class="c-kw">var</span> nama = <span class="c-str">"Rani Putri"</span>   <span class="c-com">// disimpan di memori (RAM)</span></code></pre>
+  <p class="lead">Selama aplikasi terbuka, nilainya bisa dibaca kapan saja. Begitu aplikasi ditutup, memori dibersihkan dan nilai itu <b>hilang</b>. Supaya tetap ada, nilainya harus ditulis ke <b>penyimpanan</b> &mdash; salah satu caranya dengan <b>SharedPreferences</b>.</p>
+
+  <div class="flow">
+    <div class="box">
+      <b>Aplikasi berjalan</b>
+      variabel di memori: nama, email, bio
+      <small>ada selama aplikasi terbuka</small>
+    </div>
+    <div class="arrow">Simpan &rarr;<span>edit().apply()</span></div>
+    <div class="box store">
+      <b>profil_prefs.xml</b>
+      di penyimpanan internal
+      <small>tetap ada walau aplikasi ditutup</small>
+    </div>
+    <div class="arrow">Muat &rarr;<span>getString()</span></div>
+    <div class="box">
+      <b>Aplikasi dibuka lagi</b>
+      isian langsung terisi data lama
+      <small>dibaca di onCreate()</small>
+    </div>
+  </div>
+
+  <h3>Kapan data hilang, kapan tetap ada</h3>
+  <table>
+    <tr><th>Kejadian</th><th>Variabel di memori</th><th>Data di SharedPreferences</th></tr>
+    <tr><td>Menekan tombol Back untuk keluar</td><td>Hilang</td><td><b>Tetap</b></td></tr>
+    <tr><td>Aplikasi ditutup paksa (digeser dari daftar aplikasi terakhir)</td><td>Hilang</td><td><b>Tetap</b></td></tr>
+    <tr><td>Ponsel dimatikan lalu dinyalakan lagi</td><td>Hilang</td><td><b>Tetap</b></td></tr>
+    <tr><td>Pengguna menekan <b>Clear data</b> di pengaturan aplikasi</td><td>Hilang</td><td>Terhapus</td></tr>
+    <tr><td>Aplikasi di-<i>uninstall</i></td><td>Hilang</td><td>Terhapus</td></tr>
+  </table>
+
+  <div class="key"><b>Inti bagian ini:</b> kalau data harus tetap ada setelah aplikasi ditutup, jangan hanya disimpan di variabel &mdash; tulis ke penyimpanan.</div>
+</section>
+
+<!-- ================= 02 KONSEP ================= -->
+<section id="konsep">
+  <div class="sec-num">Materi 02</div>
+  <h2><span class="bar"></span>SharedPreferences Itu Apa?</h2>
+
+  <p class="lead">SharedPreferences adalah penyimpanan sederhana berbentuk <b>pasangan kunci&ndash;nilai</b> (<i>key&ndash;value</i>). Satu data disimpan dengan nama (kunci), dan dibaca kembali memakai nama itu.</p>
+
+  <div class="card">
+    <h3 style="margin-top:0">Analoginya: label gantung</h3>
+    <p class="lead">Bayangkan kotak penyimpanan dengan banyak label: <b>&ldquo;nama&rdquo;</b>, <b>&ldquo;email&rdquo;</b>, <b>&ldquo;mode_gelap&rdquo;</b>. Untuk menaruh data, kamu menulis nama labelnya; untuk mengambil data, kamu menyebut nama label yang sama.</p>
+    <table>
+      <tr><th>Kunci (key)</th><th>Nilai (value)</th><th>Tipe</th></tr>
+      <tr><td><code class="inline">nama</code></td><td>Rani Putri</td><td>String</td></tr>
+      <tr><td><code class="inline">email</code></td><td>rani@example.com</td><td>String</td></tr>
+      <tr><td><code class="inline">avatar</code></td><td>1</td><td>Int</td></tr>
+      <tr><td><code class="inline">mode_gelap</code></td><td>true</td><td>Boolean</td></tr>
+    </table>
+  </div>
+
+  <h3>Di mana datanya disimpan?</h3>
+  <p class="lead">Android menyimpannya sebagai <b>satu file XML</b> di penyimpanan internal aplikasi. Kita tidak perlu menulis file itu sendiri &mdash; Android yang mengurus. Bentuk isinya seperti ini:</p>
+  <pre><code><span class="c-com">&lt;!-- /data/data/com.example.pengaturanprofil/shared_preferences/profil_prefs.xml --&gt;</span>
+<span class="c-tag">&lt;?xml version='1.0' encoding='utf-8' standalone='yes' ?&gt;</span>
+<span class="c-tag">&lt;map&gt;</span>
+    <span class="c-tag">&lt;string</span> <span class="c-kw">name</span>=<span class="c-str">"nama"</span><span class="c-tag">&gt;</span>Rani Putri<span class="c-tag">&lt;/string&gt;</span>
+    <span class="c-tag">&lt;string</span> <span class="c-kw">name</span>=<span class="c-str">"email"</span><span class="c-tag">&gt;</span>rani@example.com<span class="c-tag">&lt;/string&gt;</span>
+    <span class="c-tag">&lt;boolean</span> <span class="c-kw">name</span>=<span class="c-str">"mode_gelap"</span> <span class="c-kw">value</span>=<span class="c-str">"true"</span> <span class="c-tag">/&gt;</span>
+    <span class="c-tag">&lt;int</span> <span class="c-kw">name</span>=<span class="c-str">"avatar"</span> <span class="c-kw">value</span>=<span class="c-str">"1"</span> <span class="c-tag">/&gt;</span>
+<span class="c-tag">&lt;/map&gt;</span></code></pre>
+  <div class="note"><b>Mau membuktikan sendiri?</b> Jalankan aplikasi di emulator, lalu buka <b>View &rarr; Tool Windows &rarr; Device File Explorer</b> dan telusuri <code class="inline">data/data/nama.package.aplikasi/shared_preferences/</code>. File XML di atas akan terlihat persis seperti isi datamu.</div>
+
+  <h3>Kapan dipakai &mdash; dan kapan jangan</h3>
+  <table>
+    <tr><th>Cocok dipakai untuk</th><th>Jangan dipakai untuk</th></tr>
+    <tr><td>Pengaturan aplikasi: mode gelap, bahasa, notifikasi</td><td>Data besar: gambar, video, daftar panjang</td></tr>
+    <tr><td>Profil singkat pengguna: nama, email, bio</td><td>Data berbentuk tabel yang perlu dicari/diurutkan</td></tr>
+    <tr><td>Penanda sederhana: &ldquo;sudah pernah membuka aplikasi&rdquo;, status login</td><td>Data rahasia: password, token, nomor kartu</td></tr>
+    <tr><td>Skor tertinggi atau jumlah percobaan pada game</td><td>Data yang dipakai bersama beberapa pengguna</td></tr>
+  </table>
+
+  <div class="key"><b>Inti bagian ini:</b> SharedPreferences paling pas untuk <b>data kecil dan sederhana</b>. Kalau datanya banyak atau berstruktur, pakai database seperti <b>Room</b>.</div>
+
+  <div class="warn"><b>Perhatian:</b> isi SharedPreferences <b>tidak terenkripsi</b>. Siapa pun yang punya akses ke perangkat <i>root</i> bisa membacanya. Jadi jangan pernah menyimpan password atau token di sini.</div>
+</section>
+
+<!-- ================= 03 TIPE DATA & CARA AMBIL ================= -->
+<section id="tipe">
+  <div class="sec-num">Materi 03</div>
+  <h2><span class="bar"></span>Mengambil Objeknya &amp; Tipe Data yang Didukung</h2>
+
+  <h3>Langkah pertama: ambil objek SharedPreferences</h3>
+  <pre><code><span class="c-kw">val</span> prefs = getSharedPreferences(<span class="c-str">"profil_prefs"</span>, MODE_PRIVATE)</code></pre>
+  <table>
+    <tr><th>Bagian</th><th>Arti</th></tr>
+    <tr><td><code class="inline">"profil_prefs"</code></td><td>Nama file penyimpanan. Bebas ditentukan sendiri &mdash; satu aplikasi boleh punya beberapa file.</td></tr>
+    <tr><td><code class="inline">MODE_PRIVATE</code></td><td>Hanya aplikasi kita yang bisa membaca file ini. Selalu pakai mode ini.</td></tr>
+    <tr><td><code class="inline">getSharedPreferences(...)</code></td><td>Method milik <i>Context</i>, jadi bisa dipanggil dari dalam Activity. Objeknya dibuat sekali, lalu dipakai berulang.</td></tr>
+  </table>
+  <div class="note"><b>Ada juga:</b> <code class="inline">getPreferences(MODE_PRIVATE)</code> memakai nama kelas Activity sebagai nama file, dan <code class="inline">getDefaultSharedPreferences()</code> memakai file bawaan <code class="inline">PreferenceManager</code>. Untuk belajar, selalu pakai <code class="inline">getSharedPreferences()</code> supaya nama filenya jelas.</div>
+
+  <h3>Tipe data yang bisa disimpan</h3>
+  <table>
+    <tr><th>Tipe</th><th>Menyimpan</th><th>Membaca</th><th>Contoh isi</th></tr>
+    <tr><td>Teks</td><td><code class="inline">putString("nama", "Rani")</code></td><td><code class="inline">getString("nama", "")</code></td><td>nama, email, bio</td></tr>
+    <tr><td>Angka bulat</td><td><code class="inline">putInt("avatar", 1)</code></td><td><code class="inline">getInt("avatar", 0)</code></td><td>pilihan avatar, skor</td></tr>
+    <tr><td>Angka panjang</td><td><code class="inline">putLong("waktu", 0L)</code></td><td><code class="inline">getLong("waktu", 0L)</code></td><td>waktu simpan terakhir</td></tr>
+    <tr><td>Angka desimal</td><td><code class="inline">putFloat("rasio", 1.5f)</code></td><td><code class="inline">getFloat("rasio", 1f)</code></td><td>ukuran huruf</td></tr>
+    <tr><td>Ya / tidak</td><td><code class="inline">putBoolean("mode_gelap", true)</code></td><td><code class="inline">getBoolean("mode_gelap", false)</code></td><td>sakelar pengaturan</td></tr>
+    <tr><td>Kumpulan teks</td><td><code class="inline">putStringSet("tag", setOf("a"))</code></td><td><code class="inline">getStringSet("tag", emptySet())</code></td><td>daftar favorit singkat</td></tr>
+  </table>
+
+  <h3>Menulis harus lewat Editor</h3>
+  <p class="lead">Objek SharedPreferences hanya bisa <b>dibaca</b>. Untuk menulis, ambil <b>Editor</b>-nya dulu, isi nilainya, lalu simpan.</p>
+  <pre><code><span class="c-kw">val</span> editor = prefs.edit()          <span class="c-com">// 1) ambil editor</span>
+editor.putString(<span class="c-str">"nama"</span>, <span class="c-str">"Rani Putri"</span>)  <span class="c-com">// 2) isi nilai</span>
+editor.apply()                      <span class="c-com">// 3) simpan ke penyimpanan</span></code></pre>
+
+  <table>
+    <tr><th>Method</th><th>Cara kerja</th><th>Dipakai kapan</th></tr>
+    <tr><td><code class="inline">apply()</code></td><td>Menyimpan di belakang layar (<i>asinkron</i>), tidak mengembalikan nilai</td><td><b>Gunakan ini</b> &mdash; aplikasi tidak tersendat</td></tr>
+    <tr><td><code class="inline">commit()</code></td><td>Menyimpan saat itu juga, mengembalikan <code class="inline">true</code>/<code class="inline">false</code></td><td>Hanya bila hasil simpan perlu diperiksa langsung</td></tr>
+  </table>
+
+  <div class="warn"><b>Kesalahan paling sering:</b> menulis <code class="inline">prefs.edit().putString(...)</code> lalu berhenti di situ. Tanpa <code class="inline">apply()</code>, tidak ada satu pun data yang tersimpan &mdash; dan tidak ada pesan error apa pun.</div>
+</section>
+
+<!-- ================= 04 POLA ================= -->
+<section id="pola">
+  <div class="sec-num">Materi 04</div>
+  <h2><span class="bar"></span>Pola Tetap: Menyimpan &amp; Membaca</h2>
+
+  <p class="lead">Hampir semua pemakaian SharedPreferences mengikuti dua pola yang sama. Hafalkan bentuknya, tinggal ganti nama kunci dan tipe datanya.</p>
+
+  <div class="grid">
+    <div class="mini">
+      <h4>Pola Menyimpan &mdash; 3 langkah</h4>
+      <ol>
+        <li>Ambil objek <code class="inline">prefs</code></li>
+        <li><code class="inline">edit()</code> &rarr; <code class="inline">put...</code></li>
+        <li><code class="inline">apply()</code></li>
+      </ol>
+    </div>
+    <div class="mini">
+      <h4>Pola Membaca &mdash; 1 langkah</h4>
+      <ol>
+        <li><code class="inline">getString(KUNCI, default)</code></li>
+        <li>Pakai nilainya untuk mengisi tampilan</li>
+      </ol>
+    </div>
+  </div>
+
+  <pre><code><span class="c-com">// ---------- MENYIMPAN ----------</span>
+<span class="c-kw">val</span> prefs = getSharedPreferences(<span class="c-str">"profil_prefs"</span>, MODE_PRIVATE)
+
+prefs.edit()
+    .putString(<span class="c-str">"nama"</span>, <span class="c-str">"Rani Putri"</span>)
+    .putBoolean(<span class="c-str">"mode_gelap"</span>, <span class="c-kw">true</span>)
+    .apply()                     <span class="c-com">// jangan pernah lupa baris ini</span>
+
+<span class="c-com">// ---------- MEMBACA ----------</span>
+<span class="c-kw">val</span> nama  = prefs.getString(<span class="c-str">"nama"</span>, <span class="c-str">""</span>) ?: <span class="c-str">""</span>       <span class="c-com">// default: teks kosong</span>
+<span class="c-kw">val</span> gelap = prefs.getBoolean(<span class="c-str">"mode_gelap"</span>, <span class="c-kw">false</span>)   <span class="c-com">// default: mati</span></code></pre>
+
+  <div class="note"><b>Rangkaian <code class="inline">put</code> boleh disambung.</b> <code class="inline">edit()</code> mengembalikan Editor, dan setiap <code class="inline">put...</code> juga mengembalikan Editor yang sama &mdash; jadi bisa ditulis berantai dan cukup <b>satu</b> <code class="inline">apply()</code> di akhir.</div>
+
+  <h3>Nilai default: kenapa penting?</h3>
+  <p class="lead">Saat aplikasi baru dipasang, belum ada data sama sekali. Kalau dibaca begitu saja, hasilnya kosong dan tampilan bisa rusak. Karena itu setiap <code class="inline">get...</code> <b>wajib</b> diberi nilai default yang masuk akal:</p>
+  <table>
+    <tr><th>Tipe</th><th>Nilai default yang wajar</th></tr>
+    <tr><td>String</td><td><code class="inline">""</code> (teks kosong) atau <code class="inline">"Belum diisi"</code></td></tr>
+    <tr><td>Int / Long</td><td><code class="inline">0</code> atau <code class="inline">1</code></td></tr>
+    <tr><td>Float</td><td><code class="inline">0f</code></td></tr>
+    <tr><td>Boolean</td><td><code class="inline">false</code> (pengaturan mati di awal)</td></tr>
+    <tr><td>Set&lt;String&gt;</td><td><code class="inline">emptySet()</code></td></tr>
+  </table>
+
+  <div class="warn"><b>Kunci harus sama persis.</b> Menyimpan dengan kunci <code class="inline">"nama"</code> lalu membaca dengan <code class="inline">"Nama"</code> akan menghasilkan data kosong tanpa pesan error &mdash; persis seperti masalah nama kunci <i>Extra</i> pada Intent. Karena itu kunci sebaiknya disimpan sebagai <code class="inline">const val</code>.</div>
+
+  <div class="key"><b>Inti bagian ini:</b> menyimpan = <b>edit() &rarr; put &rarr; apply()</b>. Membaca = <b>get...</b> dengan nilai default. Dua pola inilah yang dipakai berulang di studi kasus berikut.</div>
+</section>
+
+<!-- ================= 05 RANCANGAN ================= -->
+<section id="rancangan">
+  <div class="sec-num">Materi 05</div>
+  <h2><span class="bar"></span>Studi Kasus: Aplikasi Pengaturan Profil</h2>
+
+  <p class="lead">Aplikasi yang akan kita rancang: satu layar berisi <b>kartu profil</b> di bagian atas dan <b>form isian</b> di bawahnya. Pengguna mengisi nama, email, bio, memilih avatar, dan boleh menyalakan mode gelap. Semua pilihan disimpan sehingga <b>saat aplikasi dibuka lagi, tampilannya kembali seperti terakhir kali ditinggalkan</b>.</p>
+
+  <h3>Data apa saja yang disimpan?</h3>
+  <table>
+    <tr><th>Bagian di layar</th><th>Kunci</th><th>Tipe</th><th>Nilai awal</th></tr>
+    <tr><td>Nama lengkap (EditText)</td><td><code class="inline">nama</code></td><td>String</td><td><code class="inline">""</code></td></tr>
+    <tr><td>Email (EditText)</td><td><code class="inline">email</code></td><td>String</td><td><code class="inline">""</code></td></tr>
+    <tr><td>Bio singkat (EditText)</td><td><code class="inline">bio</code></td><td>String</td><td><code class="inline">""</code></td></tr>
+    <tr><td>Pilihan avatar (gambar 1 dari 3)</td><td><code class="inline">avatar</code></td><td>Int (0&ndash;2)</td><td><code class="inline">0</code></td></tr>
+    <tr><td>Sakelar mode gelap (Switch)</td><td><code class="inline">mode_gelap</code></td><td>Boolean</td><td><code class="inline">false</code></td></tr>
+  </table>
+
+  <div class="key"><b>Menarik:</b> aplikasi ini hanya punya <b>satu Activity</b> dan <b>satu file SharedPreferences</b>. Tidak ada database, tidak ada layar kedua &mdash; tapi data pengguna tetap tersimpan.</div>
+
+  <h3>Tampilan yang dituju</h3>
+  <div class="screens">
+    <figure class="phone">
+      <div class="phone-body"><div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="pf-status"><span>09:41</span><span>&#9679;&#9679;&#9679;</span></div>
+          <div class="pf-appbar">Pengaturan Profil</div>
+          <div class="pf-body">
+            <div class="pf-hero">
+              <div class="pf-avatar"><svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="32" r="32" fill="#dbeafe"/><circle cx="32" cy="26" r="10" fill="#2563eb"/><path d="M18,52 a14,14 0 0,1 28,0 z" fill="#2563eb"/></svg></div>
+              <div class="pf-name">Belum diisi</div>
+              <div class="pf-mail">email@contoh.com</div>
+            </div>
+            <div class="pf-label">Pilih avatar</div>
+            <div class="pf-avatar-row">
+              <div class="pf-av-opt pilih"><svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="32" r="32" fill="#dbeafe"/><circle cx="32" cy="26" r="10" fill="#2563eb"/><path d="M18,52 a14,14 0 0,1 28,0 z" fill="#2563eb"/></svg></div>
+              <div class="pf-av-opt"><svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="32" r="32" fill="#fef3c7"/><circle cx="32" cy="26" r="10" fill="#d97706"/><path d="M18,52 a14,14 0 0,1 28,0 z" fill="#d97706"/></svg></div>
+              <div class="pf-av-opt"><svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="32" r="32" fill="#dcfce7"/><circle cx="32" cy="26" r="10" fill="#15803d"/><path d="M18,52 a14,14 0 0,1 28,0 z" fill="#15803d"/></svg></div>
+            </div>
+            <div class="pf-input empty">Nama lengkap</div>
+            <div class="pf-input empty">Email</div>
+            <div class="pf-input empty">Bio singkat</div>
+            <div class="pf-switch-row"><span>Mode gelap</span><span class="pf-switch"><i></i></span></div>
+            <div class="pf-btn">Simpan Profil</div>
+            <div class="pf-btn ghost">Hapus Semua Data</div>
+          </div>
+        </div>
+      </div>
+      <figcaption class="ps-cap">Layar 1 &mdash; pertama kali dibuka: belum ada data, semua masih bernilai default</figcaption>
+    </figure>
+
+    <figure class="phone">
+      <div class="phone-body"><div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="pf-status"><span>09:47</span><span>&#9679;&#9679;&#9679;</span></div>
+          <div class="pf-appbar">Pengaturan Profil</div>
+          <div class="pf-body">
+            <div class="pf-hero">
+              <div class="pf-avatar"><svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="32" r="32" fill="#fef3c7"/><circle cx="32" cy="26" r="10" fill="#d97706"/><path d="M18,52 a14,14 0 0,1 28,0 z" fill="#d97706"/></svg></div>
+              <div class="pf-name">Rani Putri</div>
+              <div class="pf-mail">rani@example.com</div>
+            </div>
+            <div class="pf-label">Pilih avatar</div>
+            <div class="pf-avatar-row">
+              <div class="pf-av-opt"><svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="32" r="32" fill="#dbeafe"/><circle cx="32" cy="26" r="10" fill="#2563eb"/><path d="M18,52 a14,14 0 0,1 28,0 z" fill="#2563eb"/></svg></div>
+              <div class="pf-av-opt pilih"><svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="32" r="32" fill="#fef3c7"/><circle cx="32" cy="26" r="10" fill="#d97706"/><path d="M18,52 a14,14 0 0,1 28,0 z" fill="#d97706"/></svg></div>
+              <div class="pf-av-opt"><svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="32" r="32" fill="#dcfce7"/><circle cx="32" cy="26" r="10" fill="#15803d"/><path d="M18,52 a14,14 0 0,1 28,0 z" fill="#15803d"/></svg></div>
+            </div>
+            <div class="pf-input">Rani Putri</div>
+            <div class="pf-input">rani@example.com</div>
+            <div class="pf-input">Suka desain &amp; fotografi</div>
+            <div class="pf-switch-row"><span>Mode gelap</span><span class="pf-switch"><i></i></span></div>
+            <div class="pf-btn">Simpan Profil</div>
+            <div class="pf-btn ghost">Hapus Semua Data</div>
+          </div>
+        </div>
+      </div>
+      <figcaption class="ps-cap">Layar 2 &mdash; data sudah diisi dan pilihan avatar diganti</figcaption>
+    </figure>
+  </div>
+
+  <h3>Struktur File</h3>
+  <pre><code>PengaturanProfil/
+├── app/src/main/
+│   ├── java/com/example/pengaturanprofil/
+│   │   └── MainActivity.kt              <span class="c-com">// seluruh logika simpan &amp; baca</span>
+│   ├── res/
+│   │   ├── drawable/
+│   │   │   ├── avatar_1.xml             <span class="c-com">// tiga pilihan avatar</span>
+│   │   │   ├── avatar_2.xml
+│   │   │   └── avatar_3.xml
+│   │   ├── layout/
+│   │   │   └── activity_main.xml        <span class="c-com">// kartu profil + form isian</span>
+│   │   └── values/
+│   │       └── strings.xml
+│   └── shared_prefs/                    <span class="c-com">// dibuat Android saat pertama menyimpan</span>
+│       └── profil_prefs.xml</code></pre>
+  <div class="note"><b>Perhatikan baris terakhir:</b> file <code class="inline">profil_prefs.xml</code> <b>bukan</b> kita buat sendiri di project. File itu otomatis muncul di penyimpanan perangkat saat aplikasi pertama kali memanggil <code class="inline">apply()</code>.</div>
+</section>
+
+<!-- ================= 06 LANGKAH 1-4 ================= -->
+<section id="langkah-layout">
+  <div class="sec-num">Materi 06</div>
+  <h2><span class="bar"></span>Langkah 1&ndash;4: Project, Teks, Avatar &amp; Layout</h2>
+
+  <div class="step">
+    <div class="step-title"><div class="step-num">1</div><h3>Membuat Project</h3></div>
+    <p>Buat project baru <b>Empty Views Activity</b> bernama <code class="inline">PengaturanProfil</code>, bahasa <b>Kotlin</b>, Minimum SDK <b>API 24</b>. Jalankan sekali untuk memastikan project bersih sebelum menambah kode.</p>
+  </div>
+
+  <div class="step">
+    <div class="step-title"><div class="step-num">2</div><h3>Menyiapkan Teks</h3></div>
+    <pre><code><span class="c-com">&lt;!-- res/values/strings.xml --&gt;</span>
+<span class="c-tag">&lt;resources&gt;</span>
+    <span class="c-tag">&lt;string</span> <span class="c-kw">name</span>=<span class="c-str">"app_name"</span><span class="c-tag">&gt;</span>Pengaturan Profil<span class="c-tag">&lt;/string&gt;</span>
+    <span class="c-tag">&lt;string</span> <span class="c-kw">name</span>=<span class="c-str">"nama_default"</span><span class="c-tag">&gt;</span>Belum diisi<span class="c-tag">&lt;/string&gt;</span>
+    <span class="c-tag">&lt;string</span> <span class="c-kw">name</span>=<span class="c-str">"email_default"</span><span class="c-tag">&gt;</span>email@contoh.com<span class="c-tag">&lt;/string&gt;</span>
+    <span class="c-tag">&lt;string</span> <span class="c-kw">name</span>=<span class="c-str">"label_nama"</span><span class="c-tag">&gt;</span>Nama lengkap<span class="c-tag">&lt;/string&gt;</span>
+    <span class="c-tag">&lt;string</span> <span class="c-kw">name</span>=<span class="c-str">"label_email"</span><span class="c-tag">&gt;</span>Email<span class="c-tag">&lt;/string&gt;</span>
+    <span class="c-tag">&lt;string</span> <span class="c-kw">name</span>=<span class="c-str">"label_bio"</span><span class="c-tag">&gt;</span>Bio singkat<span class="c-tag">&lt;/string&gt;</span>
+    <span class="c-tag">&lt;string</span> <span class="c-kw">name</span>=<span class="c-str">"btn_ganti_avatar"</span><span class="c-tag">&gt;</span>Ganti Avatar<span class="c-tag">&lt;/string&gt;</span>
+    <span class="c-tag">&lt;string</span> <span class="c-kw">name</span>=<span class="c-str">"label_mode_gelap"</span><span class="c-tag">&gt;</span>Mode gelap<span class="c-tag">&lt;/string&gt;</span>
+    <span class="c-tag">&lt;string</span> <span class="c-kw">name</span>=<span class="c-str">"btn_simpan"</span><span class="c-tag">&gt;</span>Simpan Profil<span class="c-tag">&lt;/string&gt;</span>
+    <span class="c-tag">&lt;string</span> <span class="c-kw">name</span>=<span class="c-str">"btn_reset"</span><span class="c-tag">&gt;</span>Hapus Semua Data<span class="c-tag">&lt;/string&gt;</span>
+    <span class="c-tag">&lt;string</span> <span class="c-kw">name</span>=<span class="c-str">"pesan_tersimpan"</span><span class="c-tag">&gt;</span>Profil tersimpan<span class="c-tag">&lt;/string&gt;</span>
+    <span class="c-tag">&lt;string</span> <span class="c-kw">name</span>=<span class="c-str">"pesan_reset"</span><span class="c-tag">&gt;</span>Data profil dihapus<span class="c-tag">&lt;/string&gt;</span>
+    <span class="c-tag">&lt;string</span> <span class="c-kw">name</span>=<span class="c-str">"desc_avatar"</span><span class="c-tag">&gt;</span>Foto profil pengguna<span class="c-tag">&lt;/string&gt;</span>
+<span class="c-tag">&lt;/resources&gt;</span></code></pre>
+  </div>
+
+  <div class="step">
+    <div class="step-title"><div class="step-num">3</div><h3>Membuat Tiga Gambar Avatar</h3></div>
+    <p>Avatar dibuat sebagai <b>vector drawable</b> &mdash; gambar berbasis kode XML, jadi tidak perlu menyiapkan file dari luar. Ketiga file memiliki bentuk yang sama, hanya warnanya yang berbeda:</p>
+    <table>
+      <tr><th>File</th><th>Warna latar</th><th>Warna gambar</th></tr>
+      <tr><td><code class="inline">avatar_1.xml</code></td><td><code class="inline">#dbeafe</code> (biru muda)</td><td><code class="inline">#2563eb</code> (biru)</td></tr>
+      <tr><td><code class="inline">avatar_2.xml</code></td><td><code class="inline">#fef3c7</code> (kuning muda)</td><td><code class="inline">#d97706</code> (oranye)</td></tr>
+      <tr><td><code class="inline">avatar_3.xml</code></td><td><code class="inline">#dcfce7</code> (hijau muda)</td><td><code class="inline">#15803d</code> (hijau)</td></tr>
+    </table>
+    <pre><code><span class="c-com">&lt;!-- res/drawable/avatar_1.xml --&gt;</span>
+<span class="c-tag">&lt;vector</span> <span class="c-kw">xmlns:android</span>=<span class="c-str">"http://schemas.android.com/apk/res/android"</span>
+    <span class="c-kw">android:width</span>=<span class="c-str">"96dp"</span>
+    <span class="c-kw">android:height</span>=<span class="c-str">"96dp"</span>
+    <span class="c-kw">android:viewportWidth</span>=<span class="c-str">"64"</span>
+    <span class="c-kw">android:viewportHeight</span>=<span class="c-str">"64"</span><span class="c-tag">&gt;</span>
+
+    <span class="c-com">&lt;!-- lingkaran latar (pusat 32,32 jari-jari 32) --&gt;</span>
+    <span class="c-tag">&lt;path</span>
+        <span class="c-kw">android:fillColor</span>=<span class="c-str">"#dbeafe"</span>
+        <span class="c-kw">android:pathData</span>=<span class="c-str">"M32,32 m-32,0 a32,32 0 1,0 64,0 a32,32 0 1,0 -64,0"</span> <span class="c-tag">/&gt;</span>
+
+    <span class="c-com">&lt;!-- kepala: lingkaran pusat (32,26) jari-jari 10 --&gt;</span>
+    <span class="c-tag">&lt;path</span>
+        <span class="c-kw">android:fillColor</span>=<span class="c-str">"#2563eb"</span>
+        <span class="c-kw">android:pathData</span>=<span class="c-str">"M22,26 a10,10 0 1,0 20,0 a10,10 0 1,0 -20,0"</span> <span class="c-tag">/&gt;</span>
+
+    <span class="c-com">&lt;!-- bahu: setengah lingkaran di bawah kepala --&gt;</span>
+    <span class="c-tag">&lt;path</span>
+        <span class="c-kw">android:fillColor</span>=<span class="c-str">"#2563eb"</span>
+        <span class="c-kw">android:pathData</span>=<span class="c-str">"M18,52 a14,14 0 0,1 28,0 z"</span> <span class="c-tag">/&gt;</span>
+<span class="c-tag">&lt;/vector&gt;</span></code></pre>
+    <div class="note"><b>Untuk <code class="inline">avatar_2.xml</code> dan <code class="inline">avatar_3.xml</code></b> cukup <i>copy</i> file di atas, lalu ganti dua <code class="inline">fillColor</code>-nya sesuai tabel warna di atas. Tiga avatar ini nanti dipilih berurutan dengan satu tombol.</div>
+  </div>
+
+  <div class="step">
+    <div class="step-title"><div class="step-num">4</div><h3>Menyusun Layout</h3></div>
+    <p>Susunannya sederhana: kartu profil di atas (avatar, nama, email), lalu form isian, sakelar mode gelap, dan dua tombol.</p>
+    <pre><code><span class="c-com">&lt;!-- res/layout/activity_main.xml --&gt;</span>
+<span class="c-tag">&lt;ScrollView</span> <span class="c-kw">xmlns:android</span>=<span class="c-str">"http://schemas.android.com/apk/res/android"</span>
+    <span class="c-kw">android:id</span>=<span class="c-str">"@+id/layoutUtama"</span>
+    <span class="c-kw">android:layout_width</span>=<span class="c-str">"match_parent"</span>
+    <span class="c-kw">android:layout_height</span>=<span class="c-str">"match_parent"</span>
+    <span class="c-kw">android:fillViewport</span>=<span class="c-str">"true"</span><span class="c-tag">&gt;</span>
+
+    <span class="c-tag">&lt;LinearLayout</span>
+        <span class="c-kw">android:layout_width</span>=<span class="c-str">"match_parent"</span>
+        <span class="c-kw">android:layout_height</span>=<span class="c-str">"wrap_content"</span>
+        <span class="c-kw">android:orientation</span>=<span class="c-str">"vertical"</span>
+        <span class="c-kw">android:padding</span>=<span class="c-str">"20dp"</span><span class="c-tag">&gt;</span>
+
+        <span class="c-com">&lt;!-- ===== 1. kartu profil ===== --&gt;</span>
+        <span class="c-tag">&lt;ImageView</span>
+            <span class="c-kw">android:id</span>=<span class="c-str">"@+id/ivAvatar"</span>
+            <span class="c-kw">android:layout_width</span>=<span class="c-str">"96dp"</span>
+            <span class="c-kw">android:layout_height</span>=<span class="c-str">"96dp"</span>
+            <span class="c-kw">android:layout_gravity</span>=<span class="c-str">"center_horizontal"</span>
+            <span class="c-kw">android:contentDescription</span>=<span class="c-str">"@string/desc_avatar"</span>
+            <span class="c-kw">android:src</span>=<span class="c-str">"@drawable/avatar_1"</span> <span class="c-tag">/&gt;</span>
+
+        <span class="c-tag">&lt;TextView</span>
+            <span class="c-kw">android:id</span>=<span class="c-str">"@+id/tvNamaKartu"</span>
+            <span class="c-kw">android:layout_width</span>=<span class="c-str">"match_parent"</span>
+            <span class="c-kw">android:layout_height</span>=<span class="c-str">"wrap_content"</span>
+            <span class="c-kw">android:layout_marginTop</span>=<span class="c-str">"10dp"</span>
+            <span class="c-kw">android:gravity</span>=<span class="c-str">"center"</span>
+            <span class="c-kw">android:text</span>=<span class="c-str">"@string/nama_default"</span>
+            <span class="c-kw">android:textSize</span>=<span class="c-str">"20sp"</span>
+            <span class="c-kw">android:textStyle</span>=<span class="c-str">"bold"</span> <span class="c-tag">/&gt;</span>
+
+        <span class="c-tag">&lt;TextView</span>
+            <span class="c-kw">android:id</span>=<span class="c-str">"@+id/tvEmailKartu"</span>
+            <span class="c-kw">android:layout_width</span>=<span class="c-str">"match_parent"</span>
+            <span class="c-kw">android:layout_height</span>=<span class="c-str">"wrap_content"</span>
+            <span class="c-kw">android:gravity</span>=<span class="c-str">"center"</span>
+            <span class="c-kw">android:text</span>=<span class="c-str">"@string/email_default"</span>
+            <span class="c-kw">android:textSize</span>=<span class="c-str">"14sp"</span> <span class="c-tag">/&gt;</span>
+
+        <span class="c-com">&lt;!-- ===== 2. form isian ===== --&gt;</span>
+        <span class="c-tag">&lt;EditText</span>
+            <span class="c-kw">android:id</span>=<span class="c-str">"@+id/etNama"</span>
+            <span class="c-kw">android:layout_width</span>=<span class="c-str">"match_parent"</span>
+            <span class="c-kw">android:layout_height</span>=<span class="c-str">"wrap_content"</span>
+            <span class="c-kw">android:layout_marginTop</span>=<span class="c-str">"22dp"</span>
+            <span class="c-kw">android:hint</span>=<span class="c-str">"@string/label_nama"</span>
+            <span class="c-kw">android:inputType</span>=<span class="c-str">"textPersonName"</span> <span class="c-tag">/&gt;</span>
+
+        <span class="c-tag">&lt;EditText</span>
+            <span class="c-kw">android:id</span>=<span class="c-str">"@+id/etEmail"</span>
+            <span class="c-kw">android:layout_width</span>=<span class="c-str">"match_parent"</span>
+            <span class="c-kw">android:layout_height</span>=<span class="c-str">"wrap_content"</span>
+            <span class="c-kw">android:hint</span>=<span class="c-str">"@string/label_email"</span>
+            <span class="c-kw">android:inputType</span>=<span class="c-str">"textEmailAddress"</span> <span class="c-tag">/&gt;</span>
+
+        <span class="c-tag">&lt;EditText</span>
+            <span class="c-kw">android:id</span>=<span class="c-str">"@+id/etBio"</span>
+            <span class="c-kw">android:layout_width</span>=<span class="c-str">"match_parent"</span>
+            <span class="c-kw">android:layout_height</span>=<span class="c-str">"wrap_content"</span>
+            <span class="c-kw">android:hint</span>=<span class="c-str">"@string/label_bio"</span>
+            <span class="c-kw">android:inputType</span>=<span class="c-str">"textMultiLine"</span>
+            <span class="c-kw">android:maxLines</span>=<span class="c-str">"3"</span> <span class="c-tag">/&gt;</span>
+
+        <span class="c-tag">&lt;Button</span>
+            <span class="c-kw">android:id</span>=<span class="c-str">"@+id/btnGantiAvatar"</span>
+            <span class="c-kw">android:layout_width</span>=<span class="c-str">"wrap_content"</span>
+            <span class="c-kw">android:layout_height</span>=<span class="c-str">"wrap_content"</span>
+            <span class="c-kw">android:layout_gravity</span>=<span class="c-str">"center_horizontal"</span>
+            <span class="c-kw">android:text</span>=<span class="c-str">"@string/btn_ganti_avatar"</span> <span class="c-tag">/&gt;</span>
+
+        <span class="c-com">&lt;!-- ===== 3. sakelar mode gelap ===== --&gt;</span>
+        <span class="c-tag">&lt;androidx.appcompat.widget.SwitchCompat</span>
+            <span class="c-kw">android:id</span>=<span class="c-str">"@+id/swGelap"</span>
+            <span class="c-kw">android:layout_width</span>=<span class="c-str">"match_parent"</span>
+            <span class="c-kw">android:layout_height</span>=<span class="c-str">"wrap_content"</span>
+            <span class="c-kw">android:layout_marginTop</span>=<span class="c-str">"14dp"</span>
+            <span class="c-kw">android:text</span>=<span class="c-str">"@string/label_mode_gelap"</span> <span class="c-tag">/&gt;</span>
+
+        <span class="c-com">&lt;!-- ===== 4. tombol aksi ===== --&gt;</span>
+        <span class="c-tag">&lt;Button</span>
+            <span class="c-kw">android:id</span>=<span class="c-str">"@+id/btnSimpan"</span>
+            <span class="c-kw">android:layout_width</span>=<span class="c-str">"match_parent"</span>
+            <span class="c-kw">android:layout_height</span>=<span class="c-str">"wrap_content"</span>
+            <span class="c-kw">android:layout_marginTop</span>=<span class="c-str">"20dp"</span>
+            <span class="c-kw">android:text</span>=<span class="c-str">"@string/btn_simpan"</span> <span class="c-tag">/&gt;</span>
+
+        <span class="c-tag">&lt;Button</span>
+            <span class="c-kw">android:id</span>=<span class="c-str">"@+id/btnReset"</span>
+            <span class="c-kw">android:layout_width</span>=<span class="c-str">"match_parent"</span>
+            <span class="c-kw">android:layout_height</span>=<span class="c-str">"wrap_content"</span>
+            <span class="c-kw">android:text</span>=<span class="c-str">"@string/btn_reset"</span> <span class="c-tag">/&gt;</span>
+    <span class="c-tag">&lt;/LinearLayout&gt;</span>
+<span class="c-tag">&lt;/ScrollView&gt;</span></code></pre>
+    <div class="note"><b>Mengapa memakai ScrollView?</b> Kalau papan tombol muncul saat mengisi, isi layar bisa terpotong. Dengan ScrollView, seluruh form tetap bisa digulir di layar kecil.</div>
+  </div>
+</section>
+
+<!-- ================= 07 LANGKAH 5-6 : MENYIMPAN ================= -->
+<section id="langkah-simpan">
+  <div class="sec-num">Materi 07</div>
+  <h2><span class="bar"></span>Langkah 5&ndash;6: Kunci Data &amp; Menyimpan</h2>
+
+  <div class="step">
+    <div class="step-title"><div class="step-num">5</div><h3>Tentukan Nama File &amp; Kunci</h3></div>
+    <p>Semua nama sebaiknya ditulis sekali saja di bagian atas kelas. Kalau kunci ditulis langsung di banyak tempat, cepat atau lambat pasti ada satu yang salah ketik &mdash; dan datanya jadi tidak terbaca.</p>
+    <pre><code><span class="c-kw">class</span> MainActivity : AppCompatActivity() {
+
+    <span class="c-kw">companion object</span> {
+        <span class="c-com">// nama file penyimpanan (bebas, terserah kita)</span>
+        <span class="c-kw">private const val</span> NAMA_PREFS = <span class="c-str">"profil_prefs"</span>
+
+        <span class="c-com">// kunci datanya</span>
+        <span class="c-kw">private const val</span> KEY_NAMA   = <span class="c-str">"nama"</span>
+        <span class="c-kw">private const val</span> KEY_EMAIL  = <span class="c-str">"email"</span>
+        <span class="c-kw">private const val</span> KEY_BIO    = <span class="c-str">"bio"</span>
+        <span class="c-kw">private const val</span> KEY_AVATAR = <span class="c-str">"avatar"</span>
+        <span class="c-kw">private const val</span> KEY_GELAP  = <span class="c-str">"mode_gelap"</span>
+
+        <span class="c-com">// tiga pilihan avatar (urutan sesuai tombol Ganti Avatar)</span>
+        <span class="c-kw">private val</span> DAFTAR_AVATAR = listOf(
+            R.drawable.avatar_1, R.drawable.avatar_2, R.drawable.avatar_3
+        )
+    }
+
+    <span class="c-com">// objek SharedPreferences dibagikan ke seluruh kelas</span>
+    <span class="c-kw">private val</span> prefs <span class="c-kw">by lazy</span> { getSharedPreferences(NAMA_PREFS, MODE_PRIVATE) }
+
+    <span class="c-kw">private var</span> indeksAvatar = 0      <span class="c-com">// 0, 1, atau 2</span>
+
+    <span class="c-com">// ... view dan fungsi-fungsinya ditulis pada langkah berikutnya ...</span>
+}</code></pre>
+    <div class="note"><b>Mengapa <code class="inline">by lazy</code>?</b> Supaya objek SharedPreferences dibuat sekali saja, saat pertama kali dipakai, lalu dipakai ulang di semua fungsi. Tidak perlu memanggil <code class="inline">getSharedPreferences()</code> berulang kali.</div>
+  </div>
+
+  <div class="step">
+    <div class="step-title"><div class="step-num">6</div><h3>Menyimpan Data ke SharedPreferences</h3></div>
+    <p>Satu fungsi untuk menyimpan semuanya. Perhatikan bahwa semua isian dikumpulkan ke dalam <b>satu rangkaian</b> yang diakhiri <code class="inline">apply()</code>.</p>
+    <pre><code><span class="c-kw">private fun</span> simpanProfil() {
+    prefs.edit()
+        .putString(KEY_NAMA,   etNama.text.toString().trim())
+        .putString(KEY_EMAIL,  etEmail.text.toString().trim())
+        .putString(KEY_BIO,    etBio.text.toString().trim())
+        .putInt(KEY_AVATAR,    indeksAvatar)
+        .putBoolean(KEY_GELAP, swGelap.isChecked)
+        .apply()                     <span class="c-com">// WAJIB: tulis ke penyimpanan</span>
+
+    Toast.makeText(<span class="c-kw">this</span>, getString(R.string.pesan_tersimpan), Toast.LENGTH_SHORT).show()
+}</code></pre>
+    <p>Lalu panggil dari tombol <b>Simpan Profil</b>:</p>
+    <pre><code>btnSimpan.setOnClickListener { simpanProfil() }</code></pre>
+
+    <h4>Alur saat tombol Simpan ditekan</h4>
+    <table>
+      <tr><th>Baris</th><th>Yang terjadi</th></tr>
+      <tr><td><code class="inline">prefs.edit()</code></td><td>Membuka sesi penyuntingan pada file <code class="inline">profil_prefs.xml</code></td></tr>
+      <tr><td><code class="inline">putString(...)</code></td><td>Menuliskan isi EditText ke kunci <code class="inline">nama</code>, <code class="inline">email</code>, <code class="inline">bio</code></td></tr>
+      <tr><td><code class="inline">putInt(KEY_AVATAR, indeksAvatar)</code></td><td>Menyimpan avatar yang sedang dipilih, cukup sebagai angka</td></tr>
+      <tr><td><code class="inline">putBoolean(KEY_GELAP, ...)</code></td><td>Menyimpan posisi sakelar mode gelap (nyala / mati)</td></tr>
+      <tr><td><code class="inline">apply()</code></td><td>Menuliskan semuanya ke penyimpanan, di belakang layar</td></tr>
+    </table>
+
+    <div class="warn"><b>Kalau <code class="inline">apply()</code> terlupa</b>, aplikasi tetap berjalan tanpa error dan tampilan tetap berubah &mdash; tetapi setelah aplikasi ditutup, seluruh data kembali kosong. Gejala inilah yang paling sering terjadi saat belajar SharedPreferences.</div>
+
+    <div class="note"><b>Hanya berubah, bukan menimpa file.</b> <code class="inline">apply()</code> hanya menuliskan kunci yang kamu sebutkan. Kunci lain yang sudah ada di file itu tetap aman &mdash; jadi data yang tidak diubah tidak akan hilang.</div>
+  </div>
+</section>
+
+<!-- ================= 08 LANGKAH 7-8 : MEMBACA ================= -->
+<section id="langkah-baca">
+  <div class="sec-num">Materi 08</div>
+  <h2><span class="bar"></span>Langkah 7&ndash;8: Membaca, Menerapkan &amp; Menghapus</h2>
+
+  <div class="step">
+    <div class="step-title"><div class="step-num">7</div><h3>Membaca Data Saat Aplikasi Dibuka</h3></div>
+    <p>Fungsi ini dipanggil sekali di <code class="inline">onCreate()</code>. Tugasnya: mengambil semua nilai dari SharedPreferences, lalu menaruhnya kembali ke tampilan.</p>
+    <pre><code><span class="c-kw">private fun</span> muatProfil() {
+    <span class="c-com">// 1) baca semua nilai; default dipakai bila data belum pernah disimpan</span>
+    <span class="c-kw">val</span> nama     = prefs.getString(KEY_NAMA, <span class="c-str">""</span>) ?: <span class="c-str">""</span>
+    <span class="c-kw">val</span> email    = prefs.getString(KEY_EMAIL, <span class="c-str">""</span>) ?: <span class="c-str">""</span>
+    <span class="c-kw">val</span> bio      = prefs.getString(KEY_BIO, <span class="c-str">""</span>) ?: <span class="c-str">""</span>
+    indeksAvatar = prefs.getInt(KEY_AVATAR, 0)
+    <span class="c-kw">val</span> gelap    = prefs.getBoolean(KEY_GELAP, <span class="c-kw">false</span>)
+
+    <span class="c-com">// 2) isikan ke tampilan</span>
+    etNama.setText(nama)
+    etEmail.setText(email)
+    etBio.setText(bio)
+    ivAvatar.setImageResource(DAFTAR_AVATAR[indeksAvatar])
+    swGelap.isChecked = gelap
+
+    <span class="c-com">// 3) terapkan tampilan yang bergantung pada data tersimpan</span>
+    terapkanModeGelap(gelap)
+    perbaruiKartu()
+}</code></pre>
+    <p>Panggil di dalam <code class="inline">onCreate()</code>, setelah semua view diambil:</p>
+    <pre><code><span class="c-kw">override fun</span> onCreate(savedInstanceState: Bundle?) {
+    <span class="c-kw">super</span>.onCreate(savedInstanceState)
+    setContentView(R.layout.activity_main)
+
+    <span class="c-com">// ... findViewById &amp; pemasangan listener ...</span>
+
+    muatProfil()      <span class="c-com">// tampilkan data yang tersimpan (kalau ada)</span>
+}</code></pre>
+    <div class="note"><b>Inilah kunci penyimpanannya.</b> Karena <code class="inline">muatProfil()</code> selalu dipanggil saat Activity dibuat, formulir akan terisi sendiri setiap kali aplikasi dibuka &mdash; tanpa perlu kode tambahan di mana pun.</div>
+  </div>
+
+  <div class="step">
+    <div class="step-title"><div class="step-num">8</div><h3>Menghapus Data &amp; Melengkapi Tampilan</h3></div>
+
+    <h4>a. Menghapus seluruh data</h4>
+    <pre><code><span class="c-kw">private fun</span> hapusSemuaData() {
+    prefs.edit().clear().apply()      <span class="c-com">// hapus semua kunci di file ini</span>
+
+    Toast.makeText(<span class="c-kw">this</span>, getString(R.string.pesan_reset), Toast.LENGTH_SHORT).show()
+    muatProfil()                      <span class="c-com">// tampilan kembali ke nilai default</span>
+}</code></pre>
+    <p>Ingin menghapus <b>satu kunci saja</b>? Ganti <code class="inline">clear()</code> menjadi <code class="inline">remove(KEY_BIO)</code>. Keduanya tetap harus diakhiri <code class="inline">apply()</code>.</p>
+
+    <h4>b. Mengganti avatar</h4>
+    <pre><code><span class="c-kw">private fun</span> gantiAvatar() {
+    indeksAvatar = (indeksAvatar + 1) % DAFTAR_AVATAR.size   <span class="c-com">// 0 → 1 → 2 → 0 …</span>
+    ivAvatar.setImageResource(DAFTAR_AVATAR[indeksAvatar])
+}</code></pre>
+    <p>Perhatikan: yang disimpan hanya <b>angka indeksnya</b>, bukan gambar. Saat dibaca, angka itu dipakai lagi untuk memilih gambar dari <code class="inline">DAFTAR_AVATAR</code>.</p>
+
+    <h4>c. Menerapkan mode gelap</h4>
+    <pre><code><span class="c-kw">private fun</span> terapkanModeGelap(aktif: Boolean) {
+    <span class="c-kw">val</span> latar      = <span class="c-kw">if</span> (aktif) <span class="c-str">"#121212"</span> <span class="c-kw">else</span> <span class="c-str">"#FFFFFF"</span>
+    <span class="c-kw">val</span> warnaNama  = <span class="c-kw">if</span> (aktif) <span class="c-str">"#F5F5F5"</span> <span class="c-kw">else</span> <span class="c-str">"#1B1B1B"</span>
+    <span class="c-kw">val</span> warnaEmail = <span class="c-kw">if</span> (aktif) <span class="c-str">"#B0B0B0"</span> <span class="c-kw">else</span> <span class="c-str">"#6B6B6B"</span>
+
+    layoutUtama.setBackgroundColor(Color.parseColor(latar))
+    tvNamaKartu.setTextColor(Color.parseColor(warnaNama))
+    tvEmailKartu.setTextColor(Color.parseColor(warnaEmail))
+}</code></pre>
+    <div class="warn"><b>Ini cara sederhana</b> agar pengaruh data tersimpan langsung terlihat. Untuk aplikasi sesungguhnya, mode gelap sebaiknya memakai tema siang/malam: <code class="inline">AppCompatDelegate.setDefaultNightMode()</code> dengan tema <code class="inline">Theme.AppCompat.DayNight</code>. Cukup tahu polanya &mdash; inti materi kita tetap SharedPreferences.</div>
+  </div>
+
+  <h3>Kode Lengkap MainActivity.kt</h3>
+  <p class="lead">Semua potongan di atas jika disatukan menjadi seperti ini. Gunakan sebagai pembanding hasil pekerjaanmu.</p>
+  <pre><code><span class="c-kw">package</span> com.example.pengaturanprofil
+
+<span class="c-kw">import</span> android.graphics.Color
+<span class="c-kw">import</span> android.os.Bundle
+<span class="c-kw">import</span> android.view.View
+<span class="c-kw">import</span> android.widget.Button
+<span class="c-kw">import</span> android.widget.EditText
+<span class="c-kw">import</span> android.widget.ImageView
+<span class="c-kw">import</span> android.widget.TextView
+<span class="c-kw">import</span> android.widget.Toast
+<span class="c-kw">import</span> androidx.appcompat.app.AppCompatActivity
+<span class="c-kw">import</span> androidx.appcompat.widget.SwitchCompat
+<span class="c-kw">import</span> androidx.core.widget.doOnTextChanged
+
+<span class="c-kw">class</span> MainActivity : AppCompatActivity() {
+
+    <span class="c-kw">companion object</span> {
+        <span class="c-kw">private const val</span> NAMA_PREFS = <span class="c-str">"profil_prefs"</span>
+
+        <span class="c-kw">private const val</span> KEY_NAMA   = <span class="c-str">"nama"</span>
+        <span class="c-kw">private const val</span> KEY_EMAIL  = <span class="c-str">"email"</span>
+        <span class="c-kw">private const val</span> KEY_BIO    = <span class="c-str">"bio"</span>
+        <span class="c-kw">private const val</span> KEY_AVATAR = <span class="c-str">"avatar"</span>
+        <span class="c-kw">private const val</span> KEY_GELAP  = <span class="c-str">"mode_gelap"</span>
+
+        <span class="c-kw">private val</span> DAFTAR_AVATAR = listOf(
+            R.drawable.avatar_1, R.drawable.avatar_2, R.drawable.avatar_3
+        )
+    }
+
+    <span class="c-kw">private val</span> prefs <span class="c-kw">by lazy</span> { getSharedPreferences(NAMA_PREFS, MODE_PRIVATE) }
+    <span class="c-kw">private var</span> indeksAvatar = 0
+
+    <span class="c-kw">private lateinit var</span> layoutUtama: View
+    <span class="c-kw">private lateinit var</span> ivAvatar: ImageView
+    <span class="c-kw">private lateinit var</span> tvNamaKartu: TextView
+    <span class="c-kw">private lateinit var</span> tvEmailKartu: TextView
+    <span class="c-kw">private lateinit var</span> etNama: EditText
+    <span class="c-kw">private lateinit var</span> etEmail: EditText
+    <span class="c-kw">private lateinit var</span> etBio: EditText
+    <span class="c-kw">private lateinit var</span> swGelap: SwitchCompat
+
+    <span class="c-kw">override fun</span> onCreate(savedInstanceState: Bundle?) {
+        <span class="c-kw">super</span>.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        <span class="c-com">// 1) ambil semua view</span>
+        layoutUtama  = findViewById(R.id.layoutUtama)
+        ivAvatar     = findViewById(R.id.ivAvatar)
+        tvNamaKartu  = findViewById(R.id.tvNamaKartu)
+        tvEmailKartu = findViewById(R.id.tvEmailKartu)
+        etNama       = findViewById(R.id.etNama)
+        etEmail      = findViewById(R.id.etEmail)
+        etBio        = findViewById(R.id.etBio)
+        swGelap      = findViewById(R.id.swGelap)
+
+        <span class="c-com">// 2) aksi tombol</span>
+        findViewById&lt;Button&gt;(R.id.btnGantiAvatar).setOnClickListener { gantiAvatar() }
+        findViewById&lt;Button&gt;(R.id.btnSimpan).setOnClickListener { simpanProfil() }
+        findViewById&lt;Button&gt;(R.id.btnReset).setOnClickListener { hapusSemuaData() }
+
+        <span class="c-com">// 3) kartu profil ikut berubah saat isian diketik</span>
+        etNama.doOnTextChanged { _, _, _, _ -&gt; perbaruiKartu() }
+        etEmail.doOnTextChanged { _, _, _, _ -&gt; perbaruiKartu() }
+
+        <span class="c-com">// 4) tampilkan data yang tersimpan</span>
+        muatProfil()
+    }
+
+    <span class="c-com">// ================= menyimpan =================</span>
+    <span class="c-kw">private fun</span> simpanProfil() {
+        prefs.edit()
+            .putString(KEY_NAMA,   etNama.text.toString().trim())
+            .putString(KEY_EMAIL,  etEmail.text.toString().trim())
+            .putString(KEY_BIO,    etBio.text.toString().trim())
+            .putInt(KEY_AVATAR,    indeksAvatar)
+            .putBoolean(KEY_GELAP, swGelap.isChecked)
+            .apply()
+
+        Toast.makeText(<span class="c-kw">this</span>, getString(R.string.pesan_tersimpan), Toast.LENGTH_SHORT).show()
+    }
+
+    <span class="c-com">// ================= membaca =================</span>
+    <span class="c-kw">private fun</span> muatProfil() {
+        <span class="c-kw">val</span> nama  = prefs.getString(KEY_NAMA, <span class="c-str">""</span>) ?: <span class="c-str">""</span>
+        <span class="c-kw">val</span> email = prefs.getString(KEY_EMAIL, <span class="c-str">""</span>) ?: <span class="c-str">""</span>
+        <span class="c-kw">val</span> bio   = prefs.getString(KEY_BIO, <span class="c-str">""</span>) ?: <span class="c-str">""</span>
+        indeksAvatar = prefs.getInt(KEY_AVATAR, 0)
+        <span class="c-kw">val</span> gelap  = prefs.getBoolean(KEY_GELAP, <span class="c-kw">false</span>)
+
+        etNama.setText(nama)
+        etEmail.setText(email)
+        etBio.setText(bio)
+        ivAvatar.setImageResource(DAFTAR_AVATAR[indeksAvatar])
+        swGelap.isChecked = gelap
+
+        terapkanModeGelap(gelap)
+        perbaruiKartu()
+    }
+
+    <span class="c-com">// ================= menghapus =================</span>
+    <span class="c-kw">private fun</span> hapusSemuaData() {
+        prefs.edit().clear().apply()
+        Toast.makeText(<span class="c-kw">this</span>, getString(R.string.pesan_reset), Toast.LENGTH_SHORT).show()
+        muatProfil()
+    }
+
+    <span class="c-com">// ================= tampilan =================</span>
+    <span class="c-kw">private fun</span> gantiAvatar() {
+        indeksAvatar = (indeksAvatar + 1) % DAFTAR_AVATAR.size
+        ivAvatar.setImageResource(DAFTAR_AVATAR[indeksAvatar])
+    }
+
+    <span class="c-kw">private fun</span> perbaruiKartu() {
+        <span class="c-kw">val</span> nama  = etNama.text.toString().trim()
+        <span class="c-kw">val</span> email = etEmail.text.toString().trim()
+
+        tvNamaKartu.text  = nama.ifEmpty { getString(R.string.nama_default) }
+        tvEmailKartu.text = email.ifEmpty { getString(R.string.email_default) }
+    }
+
+    <span class="c-kw">private fun</span> terapkanModeGelap(aktif: Boolean) {
+        <span class="c-kw">val</span> latar      = <span class="c-kw">if</span> (aktif) <span class="c-str">"#121212"</span> <span class="c-kw">else</span> <span class="c-str">"#FFFFFF"</span>
+        <span class="c-kw">val</span> warnaNama  = <span class="c-kw">if</span> (aktif) <span class="c-str">"#F5F5F5"</span> <span class="c-kw">else</span> <span class="c-str">"#1B1B1B"</span>
+        <span class="c-kw">val</span> warnaEmail = <span class="c-kw">if</span> (aktif) <span class="c-str">"#B0B0B0"</span> <span class="c-kw">else</span> <span class="c-str">"#6B6B6B"</span>
+
+        layoutUtama.setBackgroundColor(Color.parseColor(latar))
+        tvNamaKartu.setTextColor(Color.parseColor(warnaNama))
+        tvEmailKartu.setTextColor(Color.parseColor(warnaEmail))
+    }
+}</code></pre>
+
+  <div class="ok"><b>Cek hasil langkah 5&ndash;8:</b> isi nama &amp; email, tekan <b>Simpan Profil</b>, lalu tekan tombol Back dan buka lagi aplikasinya &mdash; seluruh isian, avatar, dan sakelar mode gelap kembali persis seperti terakhir kali disimpan.</div>
+</section>
+
+<!-- ================= 09 UJI COBA ================= -->
+<section id="ujicoba">
+  <div class="sec-num">Materi 09</div>
+  <h2><span class="bar"></span>Tampilan Hasil &amp; Uji Coba</h2>
+
+  <p class="lead">Bagian yang paling penting dibuktikan: data harus tetap ada <b>setelah aplikasi ditutup</b>. Tiga layar berikut memperlihatkan buktinya.</p>
+
+  <div class="screens">
+    <figure class="phone">
+      <div class="phone-body"><div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="pf-status"><span>09:48</span><span>&#9679;&#9679;&#9679;</span></div>
+          <div class="pf-appbar">Pengaturan Profil</div>
+          <div class="pf-body">
+            <div class="pf-hero">
+              <div class="pf-avatar"><svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="32" r="32" fill="#dcfce7"/><circle cx="32" cy="26" r="10" fill="#15803d"/><path d="M18,52 a14,14 0 0,1 28,0 z" fill="#15803d"/></svg></div>
+              <div class="pf-name">Rani Putri</div>
+              <div class="pf-mail">rani@example.com</div>
+            </div>
+            <div class="pf-label">Pilih avatar</div>
+            <div class="pf-avatar-row">
+              <div class="pf-av-opt"><svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="32" r="32" fill="#dbeafe"/><circle cx="32" cy="26" r="10" fill="#2563eb"/><path d="M18,52 a14,14 0 0,1 28,0 z" fill="#2563eb"/></svg></div>
+              <div class="pf-av-opt"><svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="32" r="32" fill="#fef3c7"/><circle cx="32" cy="26" r="10" fill="#d97706"/><path d="M18,52 a14,14 0 0,1 28,0 z" fill="#d97706"/></svg></div>
+              <div class="pf-av-opt pilih"><svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="32" r="32" fill="#dcfce7"/><circle cx="32" cy="26" r="10" fill="#15803d"/><path d="M18,52 a14,14 0 0,1 28,0 z" fill="#15803d"/></svg></div>
+            </div>
+            <div class="pf-input">Rani Putri</div>
+            <div class="pf-input">rani@example.com</div>
+            <div class="pf-input">Suka desain &amp; fotografi</div>
+            <div class="pf-switch-row"><span>Mode gelap</span><span class="pf-switch"><i></i></span></div>
+            <div class="pf-btn">Simpan Profil</div>
+            <div class="pf-btn ghost">Hapus Semua Data</div>
+          </div>
+          <div class="pf-toast">Profil tersimpan</div>
+        </div>
+      </div>
+      <figcaption class="ps-cap">Layar 3 &mdash; tombol <b>Simpan Profil</b> ditekan: data ditulis ke <code class="inline">profil_prefs.xml</code></figcaption>
+    </figure>
+
+    <figure class="phone">
+      <div class="phone-body"><div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="pf-status"><span>07:12</span><span>&#9679;&#9679;&#9679;</span></div>
+          <div class="pf-appbar">Pengaturan Profil</div>
+          <div class="pf-body">
+            <div class="pf-hero">
+              <div class="pf-avatar"><svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="32" r="32" fill="#dcfce7"/><circle cx="32" cy="26" r="10" fill="#15803d"/><path d="M18,52 a14,14 0 0,1 28,0 z" fill="#15803d"/></svg></div>
+              <div class="pf-name">Rani Putri</div>
+              <div class="pf-mail">rani@example.com</div>
+            </div>
+            <div class="pf-label">Pilih avatar</div>
+            <div class="pf-avatar-row">
+              <div class="pf-av-opt"><svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="32" r="32" fill="#dbeafe"/><circle cx="32" cy="26" r="10" fill="#2563eb"/><path d="M18,52 a14,14 0 0,1 28,0 z" fill="#2563eb"/></svg></div>
+              <div class="pf-av-opt"><svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="32" r="32" fill="#fef3c7"/><circle cx="32" cy="26" r="10" fill="#d97706"/><path d="M18,52 a14,14 0 0,1 28,0 z" fill="#d97706"/></svg></div>
+              <div class="pf-av-opt pilih"><svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="32" r="32" fill="#dcfce7"/><circle cx="32" cy="26" r="10" fill="#15803d"/><path d="M18,52 a14,14 0 0,1 28,0 z" fill="#15803d"/></svg></div>
+            </div>
+            <div class="pf-input">Rani Putri</div>
+            <div class="pf-input">rani@example.com</div>
+            <div class="pf-input">Suka desain &amp; fotografi</div>
+            <div class="pf-switch-row"><span>Mode gelap</span><span class="pf-switch"><i></i></span></div>
+            <div class="pf-btn">Simpan Profil</div>
+            <div class="pf-btn ghost">Hapus Semua Data</div>
+          </div>
+        </div>
+      </div>
+      <figcaption class="ps-cap">Layar 4 &mdash; keesokan hari, aplikasi dibuka lagi: isian terisi otomatis</figcaption>
+    </figure>
+
+    <figure class="phone">
+      <div class="phone-body"><div class="phone-notch"></div>
+        <div class="phone-screen dark">
+          <div class="pf-status"><span>07:14</span><span>&#9679;&#9679;&#9679;</span></div>
+          <div class="pf-appbar">Pengaturan Profil</div>
+          <div class="pf-body">
+            <div class="pf-hero">
+              <div class="pf-avatar"><svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="32" r="32" fill="#dcfce7"/><circle cx="32" cy="26" r="10" fill="#15803d"/><path d="M18,52 a14,14 0 0,1 28,0 z" fill="#15803d"/></svg></div>
+              <div class="pf-name">Rani Putri</div>
+              <div class="pf-mail">rani@example.com</div>
+            </div>
+            <div class="pf-label">Pilih avatar</div>
+            <div class="pf-avatar-row">
+              <div class="pf-av-opt"><svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="32" r="32" fill="#dbeafe"/><circle cx="32" cy="26" r="10" fill="#2563eb"/><path d="M18,52 a14,14 0 0,1 28,0 z" fill="#2563eb"/></svg></div>
+              <div class="pf-av-opt"><svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="32" r="32" fill="#fef3c7"/><circle cx="32" cy="26" r="10" fill="#d97706"/><path d="M18,52 a14,14 0 0,1 28,0 z" fill="#d97706"/></svg></div>
+              <div class="pf-av-opt pilih"><svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="32" r="32" fill="#dcfce7"/><circle cx="32" cy="26" r="10" fill="#15803d"/><path d="M18,52 a14,14 0 0,1 28,0 z" fill="#15803d"/></svg></div>
+            </div>
+            <div class="pf-input">Rani Putri</div>
+            <div class="pf-input">rani@example.com</div>
+            <div class="pf-input">Suka desain &amp; fotografi</div>
+            <div class="pf-switch-row"><span>Mode gelap</span><span class="pf-switch on"><i></i></span></div>
+            <div class="pf-btn">Simpan Profil</div>
+            <div class="pf-btn ghost">Hapus Semua Data</div>
+          </div>
+        </div>
+      </div>
+      <figcaption class="ps-cap">Layar 5 &mdash; sakelar mode gelap dinyalakan lalu disimpan: tampilan gelap langsung aktif saat dibuka</figcaption>
+    </figure>
+  </div>
+
+  <div class="key"><b>Inilah bukti SharedPreferences bekerja:</b> di layar 4 jam sudah berganti dari 09:48 menjadi 07:12 &mdash; artinya aplikasi benar-benar sudah ditutup &mdash; tetapi isian masih utuh.</div>
+
+  <h3>Tabel Pengujian</h3>
+  <table>
+    <tr><th>No</th><th>Skenario</th><th>Hasil yang diharapkan</th></tr>
+    <tr><td>1</td><td>Aplikasi dibuka pertama kali</td><td>Isian kosong, kartu menampilkan &ldquo;Belum diisi / email@contoh.com&rdquo;, mode gelap mati</td></tr>
+    <tr><td>2</td><td>Nama diketik sebagian</td><td>Nama pada kartu profil ikut berubah saat itu juga</td></tr>
+    <tr><td>3</td><td>Isi nama, email, bio lalu tekan <b>Simpan Profil</b></td><td>Muncul pesan <b>Profil tersimpan</b>, data tertulis ke <code class="inline">profil_prefs.xml</code></td></tr>
+    <tr><td>4</td><td>Tekan Back, lalu buka aplikasi lagi</td><td>Semua isian masih terisi seperti terakhir disimpan</td></tr>
+    <tr><td>5</td><td>Aplikasi digeser keluar dari daftar aplikasi terakhir, lalu dibuka lagi</td><td>Data tetap ada</td></tr>
+    <tr><td>6</td><td>Ponsel dimatikan, dinyalakan lagi, aplikasi dibuka</td><td>Data tetap ada</td></tr>
+    <tr><td>7</td><td><b>Ganti Avatar</b> dua kali lalu Simpan, buka ulang</td><td>Avatar ketiga yang tampil &mdash; angka indeks tersimpan dengan benar</td></tr>
+    <tr><td>8</td><td>Nyalakan <b>Mode gelap</b>, Simpan, lalu buka ulang</td><td>Tampilan gelap langsung aktif tanpa menyalakan sakelar lagi</td></tr>
+    <tr><td>9</td><td>Tekan <b>Hapus Semua Data</b></td><td>Isian, avatar, dan sakelar kembali ke nilai awal; pesan <b>Data profil dihapus</b> muncul</td></tr>
+    <tr><td>10</td><td>Setelah dihapus, buka aplikasi lagi</td><td>Tetap kosong &mdash; data benar-benar sudah dihapus dari penyimpanan</td></tr>
+    <tr><td>11</td><td>Pengaturan ponsel &rarr; Apps &rarr; <b>Clear data</b></td><td>Data kembali kosong, karena file SharedPreferences ikut terhapus</td></tr>
+    <tr><td>12</td><td>Buka <b>Device File Explorer</b> ke folder <code class="inline">shared_preferences</code></td><td>Terlihat file <code class="inline">profil_prefs.xml</code> berisi kunci dan nilai yang baru disimpan</td></tr>
+  </table>
+
+  <h3>Kesalahan Umum &amp; Solusinya</h3>
+  <table>
+    <tr><th>Gejala</th><th>Penyebab</th><th>Solusi</th></tr>
+    <tr>
+      <td>Data tidak tersimpan, tapi tidak ada error</td>
+      <td><code class="inline">apply()</code> lupa dipanggil di akhir rangkaian <code class="inline">put...</code></td>
+      <td>Pastikan rangkaian ditutup dengan <code class="inline">.apply()</code></td>
+    </tr>
+    <tr>
+      <td>Data selalu kosong saat aplikasi dibuka</td>
+      <td>Nama kunci saat menulis dan membaca berbeda (huruf besar/kecil atau salah ketik)</td>
+      <td>Simpan kunci sebagai <code class="inline">const val</code> seperti <code class="inline">KEY_NAMA</code> dan pakai di kedua tempat</td>
+    </tr>
+    <tr>
+      <td>Nilai kembali ke awal setiap aplikasi dibuka</td>
+      <td>Yang dibaca variabel biasa, bukan <code class="inline">prefs.getString(...)</code></td>
+      <td>Baca ulang dari SharedPreferences di dalam <code class="inline">muatProfil()</code></td>
+    </tr>
+    <tr>
+      <td>Teks di layar tampil sebagai <code class="inline">null</code></td>
+      <td>Hasil <code class="inline">getString()</code> bertipe <code class="inline">String?</code> dan dibiarkan apa adanya</td>
+      <td>Beri nilai default dan tambahkan <code class="inline">?: ""</code></td>
+    </tr>
+    <tr>
+      <td>Aplikasi tersendat saat menekan Simpan</td>
+      <td>Memakai <code class="inline">commit()</code>, atau menyimpan data yang terlalu besar</td>
+      <td>Ganti ke <code class="inline">apply()</code>; pindahkan data besar ke database (Room)</td>
+    </tr>
+    <tr>
+      <td>Data tidak berubah walau sudah disimpan</td>
+      <td>Antarmuka tidak diperbarui setelah data dibaca</td>
+      <td>Panggil fungsi yang memperbarui tampilan (kartu profil, mode gelap) tepat setelah membaca data</td>
+    </tr>
+    <tr>
+      <td>Ingin menyimpan gambar avatar langsung ke SharedPreferences</td>
+      <td>SharedPreferences hanya mendukung teks, angka, dan boolean</td>
+      <td>Simpan <b>indeks atau nama file</b>-nya seperti pada studi kasus ini</td>
+    </tr>
+    <tr>
+      <td>Data pengguna bocor saat ponsel di-<i>root</i></td>
+      <td>Isi SharedPreferences tidak terenkripsi</td>
+      <td>Jangan simpan password atau token di sini</td>
+    </tr>
+  </table>
+</section>
+
+<!-- ================= 10 RINGKASAN ================= -->
+<section id="ringkasan">
+  <div class="sec-num">Materi 10</div>
+  <h2><span class="bar"></span>Ringkasan, Latihan &amp; Tugas</h2>
+
+  <div class="grid">
+    <div class="mini">
+      <h4>1. Kapan dipakai?</h4>
+      <ul>
+        <li>Data kecil &amp; sederhana: pengaturan, profil, penanda</li>
+        <li>Bukan untuk data besar, tabel, atau data rahasia</li>
+      </ul>
+    </div>
+    <div class="mini">
+      <h4>2. Menyimpan</h4>
+      <ul>
+        <li><code class="inline">getSharedPreferences(nama, MODE_PRIVATE)</code></li>
+        <li><code class="inline">edit()</code> &rarr; <code class="inline">putString/putInt/putBoolean</code> &rarr; <code class="inline">apply()</code></li>
+      </ul>
+    </div>
+    <div class="mini">
+      <h4>3. Membaca</h4>
+      <ul>
+        <li><code class="inline">getString(KUNCI, "")</code>, <code class="inline">getBoolean(KUNCI, false)</code></li>
+        <li>Selalu beri nilai default</li>
+      </ul>
+    </div>
+    <div class="mini">
+      <h4>4. Menghapus</h4>
+      <ul>
+        <li><code class="inline">edit().remove(KUNCI)</code> &mdash; satu data</li>
+        <li><code class="inline">edit().clear()</code> &mdash; seluruh file</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Lima kesalahan yang paling sering terjadi</h3>
+  <ul class="checklist">
+    <li>Lupa <code class="inline">apply()</code> setelah rangkaian <code class="inline">put...</code></li>
+    <li>Menulis kunci <code class="inline">"nama"</code> tetapi membaca dengan <code class="inline">"Nama"</code></li>
+    <li>Tidak memberi nilai default saat membaca &mdash; muncul <code class="inline">null</code></li>
+    <li>Menyimpan data besar atau data rahasia di SharedPreferences</li>
+    <li>Membaca data sekali di awal, padahal data bisa berubah pada sesi yang sama</li>
+  </ul>
+
+  <h3>Latihan di kelas</h3>
+  <ol class="steps">
+    <li><b>Simpan nama panggilan:</b> satu EditText + satu tombol Simpan. Setelah aplikasi dibuka lagi, nama panggilan itu otomatis muncul di TextView.</li>
+    <li><b>Tambah satu kunci baru:</b> tambahkan pilihan &ldquo;kota&rdquo; pada studi kasus ini lengkap dengan menyimpan, membaca, dan menampilkannya.</li>
+    <li><b>Penghitung pembukaan aplikasi:</b> setiap kali aplikasi dibuka, tambahkan 1 ke kunci <code class="inline">jumlah_buka</code>, lalu tampilkan &ldquo;Kamu sudah membuka aplikasi ini n kali&rdquo;.</li>
+  </ol>
+
+  <h3>Tugas rumah</h3>
+  <ul class="checklist">
+    <li>Buat aplikasi <b>Pengaturan Profil</b> sesuai studi kasus ini, dijalankan di emulator atau perangkat asli</li>
+    <li>Wajib memuat minimal <b>3 tipe data</b> berbeda: String, Int, dan Boolean</li>
+    <li>Wajib ada tombol <b>Simpan</b> dan <b>Hapus Semua Data</b></li>
+    <li>Kumpulkan tangkapan layar sebelum &amp; sesudah aplikasi ditutup, plus isi <code class="inline">profil_prefs.xml</code> dari Device File Explorer</li>
+  </ul>
+
+  <h3>Lanjutan Opsional</h3>
+  <table>
+    <tr><th>Kebutuhan</th><th>Teknologi</th><th>Alasan</th></tr>
+    <tr><td>Data terstruktur (daftar barang, riwayat pesanan)</td><td><b>Room</b> (di atas SQLite)</td><td>Bisa dicari, diurutkan, dan berjumlah besar</td></tr>
+    <tr><td>Pengganti modern SharedPreferences</td><td><b>DataStore</b></td><td>Berbasis coroutine, aman dari akses bersamaan</td></tr>
+    <tr><td>Data rahasia: token, kunci API</td><td><b>EncryptedSharedPreferences</b> / Keystore</td><td>Isi file dienkripsi</td></tr>
+    <tr><td>File gambar, video, atau dokumen</td><td>Penyimpanan internal / eksternal</td><td>Bukan data kunci&ndash;nilai</td></tr>
+  </table>
+
+  <div class="note"><b>Ingat urutan belajarnya:</b> SharedPreferences &rarr; DataStore &rarr; Room. Untuk data pengaturan seperti mode gelap, bahasa, dan profil singkat, SharedPreferences masih pilihan paling cepat dan paling mudah dipahami.</div>
+</section>
+
+</main>
+
+<footer>
+  Materi Pemrograman Android &mdash; Penyimpanan Data Lokal: SharedPreferences<br>
+  Studi kasus: Aplikasi Pengaturan Profil &bull; Materi berikutnya: menyimpan data terstruktur dengan database
+</footer>
+
+</body>
+</html>
