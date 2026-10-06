@@ -5,6 +5,10 @@
     <string name="label_nama">Nama lengkap</string>
     <string name="label_email">Email</string>
     <string name="label_bio">Bio singkat</string>
+    <string name="label_kota">Kota</string>
+    <string name="kota_default">Kota belum diisi</string>
+    <string name="label_pilih_avatar">Pilih avatar</string>
+    <string name="info_buka">Kamu sudah membuka aplikasi ini %d kali</string>
     <string name="btn_ganti_avatar">Ganti Avatar</string>
     <string name="label_mode_gelap">Mode gelap</string>
     <string name="btn_simpan">Simpan Profil</string>

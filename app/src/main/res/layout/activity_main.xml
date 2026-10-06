@@ -12,11 +12,26 @@
         android:orientation="vertical"
         android:padding="20dp">
 
+        <!-- AppBar ala mockup HTML (pf-appbar) -->
+        <TextView
+            android:id="@+id/tvAppBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#2DB86F"
+            android:gravity="center"
+            android:padding="10dp"
+            android:text="@string/app_name"
+            android:textColor="#08301C"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <!-- ===== 1. kartu profil ===== -->
         <ImageView
             android:id="@+id/ivAvatar"
             android:layout_width="96dp"
             android:layout_height="96dp"
             android:layout_gravity="center_horizontal"
+            android:layout_marginTop="14dp"
             android:contentDescription="@string/desc_avatar"
             android:src="@drawable/avatar_1" />
 
@@ -38,11 +53,83 @@
             android:text="@string/email_default"
             android:textSize="14sp" />
 
+        <TextView
+            android:id="@+id/tvKotaKartu"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="@string/kota_default"
+            android:textSize="14sp" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="10dp"
+            android:background="#E2E8F0" />
+
+        <!-- ===== 2. pilih avatar (preview 3 + tombol tetap ada) ===== -->
+        <TextView
+            android:id="@+id/tvLabelAvatar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:gravity="center"
+            android:text="@string/label_pilih_avatar"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:id="@+id/ivAvatar1"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_margin="6dp"
+                android:background="@drawable/ring_avatar_selected"
+                android:contentDescription="@string/desc_avatar"
+                android:padding="2dp"
+                android:src="@drawable/avatar_1" />
+
+            <ImageView
+                android:id="@+id/ivAvatar2"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_margin="6dp"
+                android:background="@drawable/ring_avatar_normal"
+                android:contentDescription="@string/desc_avatar"
+                android:padding="2dp"
+                android:src="@drawable/avatar_2" />
+
+            <ImageView
+                android:id="@+id/ivAvatar3"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_margin="6dp"
+                android:background="@drawable/ring_avatar_normal"
+                android:contentDescription="@string/desc_avatar"
+                android:padding="2dp"
+                android:src="@drawable/avatar_3" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btnGantiAvatar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="4dp"
+            android:text="@string/btn_ganti_avatar" />
+
+        <!-- ===== 3. form isian ===== -->
         <EditText
             android:id="@+id/etNama"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="22dp"
+            android:layout_marginTop="16dp"
             android:hint="@string/label_nama"
             android:inputType="textPersonName" />
 
@@ -61,13 +148,14 @@
             android:inputType="textMultiLine"
             android:maxLines="3" />
 
-        <Button
-            android:id="@+id/btnGantiAvatar"
-            android:layout_width="wrap_content"
+        <EditText
+            android:id="@+id/etKota"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:text="@string/btn_ganti_avatar" />
+            android:hint="@string/label_kota"
+            android:inputType="text" />
 
+        <!-- ===== 4. sakelar mode gelap ===== -->
         <androidx.appcompat.widget.SwitchCompat
             android:id="@+id/swGelap"
             android:layout_width="match_parent"
@@ -75,6 +163,7 @@
             android:layout_marginTop="14dp"
             android:text="@string/label_mode_gelap" />
 
+        <!-- ===== 5. tombol aksi ===== -->
         <Button
             android:id="@+id/btnSimpan"
             android:layout_width="match_parent"
@@ -87,5 +176,13 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/btn_reset" />
+
+        <TextView
+            android:id="@+id/tvJumlahBuka"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:gravity="center"
+            android:textSize="12sp" />
     </LinearLayout>
 </ScrollView>
